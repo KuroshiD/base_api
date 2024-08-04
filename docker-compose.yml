@@ -1,0 +1,61 @@
+version: '3.5'
+services:
+  api1: 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: api1
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/usr/src/app
+    expose:
+      - "3001"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TIMEZONE=America/Sao_Paulo
+
+  api2: 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: api2
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/usr/src/app
+    expose:
+      - "3001"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TIMEZONE=America/Sao_Paulo
+
+  nginx: 
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api1
+      - api2
+    ports:
+      - "${NGINX_PORT}:80"
+  
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: ${DB}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+
+  redis:
+    image: redis:latest
+    command: redis-server --save "" --appendonly no --maxclients 20000
+
+networks:
+  default:
+    driver: bridge
